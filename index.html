@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clases de Manejo Personalizadas.com - Simulador de Rotondas</title>
+    <!-- Bootstrap 5 -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- FontAwesome for Social Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        background-color: #1a1d21;
+        color: #f0f2f5;
+        font-family: "Segoe UI", sans-serif;
+      }
+
+      /* Cintillo de Noticias (Sticky News Ticker) */
+      .news-ticker-container {
+        background-color: #ffc107;
+        color: #000;
+        padding: 8px 0;
+        overflow: hidden;
+        /* La magia para que baje con la pantalla sin tapar el contenido: */
+        position: sticky;
+        top: 0;
+        white-space: nowrap;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        z-index: 1030; /* Asegura que pase por encima del resto del código */
+      }
+      .news-ticker {
+        display: inline-block;
+        padding-left: 100%;
+        animation: marquee 100s linear infinite;
+        font-weight: bold;
+        font-size: 1.1rem;
+      }
+      @keyframes marquee {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-100%);
+        }
+      }
+      .news-ticker:hover {
+        animation-play-state: paused;
+      }
+
+      /* Canvas Responsive Magic */
+      #gameCanvas {
+        background-color: #343a40;
+        border: 4px solid #495057;
+        border-radius: 12px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+        display: block;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 600px;
+        height: auto;
+        aspect-ratio: 1 / 1;
+      }
+
+      .panel {
+        background-color: #212529;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        border: 1px solid #343a40;
+      }
+      .btn-custom {
+        border: 2px solid transparent;
+        transition: all 0.2s;
+        font-weight: 500;
+      }
+      .btn-custom.active {
+        border-color: #fff;
+        transform: scale(1.03);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      }
+      .footer-social a {
+        transition: color 0.3s;
+      }
+      .footer-social a:hover {
+        color: #ffc107 !important;
+      }
+
+      @media (max-width: 576px) {
+        .btn-custom {
+          padding: 10px 5px;
+          font-size: 0.9rem;
+        }
+        .panel {
+          padding: 15px;
+        }
+        .news-ticker {
+          font-size: 0.9rem;
+        }
+      }
+    </style>
+  </head>
+  <body class="pb-4">
+    <!-- Cintillo Animado Sticky -->
+    <div class="news-ticker-container">
+      <div class="news-ticker">
+        🚗 // ¡Recuerde! Si usted aprobó el curso de manejo básico o la prueba
+        teórica antes del 1 de marzo de 2026, tiene hasta el jueves 31 de
+        diciembre de 2026 para aprobar la respectiva prueba práctica de
+        moto-cuadra, sin tener que hacer el examen teórico o curso de básico de
+        manejo para licencia tipo A. // clases-de-manejo-personalizadas.com //
+        Recuerde, que ahora son 2 exámenes teóricos o cursos básicos de manejo,
+        y 2 manuales distintos para carro y moto. A la hora de pagar las
+        pruebas, le recomendaría tener mucho cuidado, si es para tipo B-1, tiene
+        que decir PTV, y si es para tipo A, PTM. // Estamos para servirles,
+        cualquier duda, consulta, clases personalizadas de manejo, de inglés, de
+        cómputo, estamos a la orden, (+506)8691-7316. // ¿Necesita una página
+        web? O aprender algún otro idioma, si gusta escríbanos al WhatsApp al
+        (+506)7017-8455 de Learning Any Language. // Desde Santiago de Puriscal,
+        San José, Costa Rica, pa'l mundo. // ¡Para servirles! // 🚦
+      </div>
+    </div>
+
+    <div class="container mt-4">
+      <div class="row mb-4 text-center">
+        <h5 class="text-warning text-uppercase tracking-wider mb-1 fs-6">
+          clases-de-manejo-personalizadas.com presenta
+        </h5>
+        <h1 class="text-light fw-bold fs-2 fs-md-1">
+          Simulador Interactivo de Rotondas
+        </h1>
+        <p class="text-white fs-6 fs-md-5">
+          Aprende como usar las rotondas correctamente con este simulador.
+          Cualquier duda nos puede escribir, enlaces de redes sociales más
+          abajo. O visite nuestra página web,
+          clases-de-manejo-personalizadas.com
+        </p>
+      </div>
+
+      <div class="row g-4 justify-content-center">
+        <!-- Área del Canvas -->
+        <div class="col-lg-7 order-1 order-lg-1">
+          <canvas id="gameCanvas" width="600" height="600"></canvas>
+        </div>
+
+        <!-- Panel de Control -->
+        <div class="col-lg-5 order-2 order-lg-2">
+          <div class="panel">
+            <h4 id="missionText" class="text-info mb-4 fw-bold">
+              Misión: Cargando...
+            </h4>
+
+            <div class="mb-4">
+              <label class="form-label text-light fw-bold"
+                >1. Seleccione Carril de Ingreso:</label
+              >
+              <div class="row g-2">
+                <div class="col-6">
+                  <button
+                    class="btn btn-outline-success w-100 lane-btn btn-custom h-100"
+                    data-lane="outer"
+                  >
+                    Carril Externo
+                  </button>
+                </div>
+                <div class="col-6">
+                  <button
+                    class="btn btn-outline-primary w-100 lane-btn btn-custom h-100"
+                    data-lane="inner"
+                  >
+                    Carril Interno
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label text-light fw-bold"
+                >2. Direccional al INGRESAR:</label
+              >
+              <div class="row g-2">
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-info w-100 sig-in-btn btn-custom h-100"
+                    data-sig="left"
+                  >
+                    Izquierda
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-warning w-100 sig-in-btn btn-custom h-100"
+                    data-sig="right"
+                  >
+                    Derecha
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-danger w-100 sig-in-btn btn-custom h-100"
+                    data-sig="none"
+                  >
+                    Ninguna
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label text-light fw-bold"
+                >3. Direccional al SALIR:</label
+              >
+              <div class="row g-2">
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-info w-100 sig-out-btn btn-custom h-100"
+                    data-sig="left"
+                  >
+                    Izquierda
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-warning w-100 sig-out-btn btn-custom h-100"
+                    data-sig="right"
+                  >
+                    Derecha
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-danger w-100 sig-out-btn btn-custom h-100"
+                    data-sig="none"
+                  >
+                    Ninguna
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              id="startAnimationBtn"
+              class="btn btn-success btn-lg w-100 fw-bold shadow py-3"
+            >
+              Ejecutar Maniobra
+            </button>
+
+            <div id="resultBox" class="alert mt-4 d-none text-start"></div>
+            <button
+              id="nextBtn"
+              class="btn btn-primary btn-lg w-100 mt-2 d-none shadow py-3"
+            >
+              Siguiente Ejercicio
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Josbrevar07 Footer -->
+      <footer class="mt-5 pt-4 text-center border-top border-secondary">
+        <div class="footer-social mb-3">
+          <a href="#" class="text-light mx-2 fs-4" title="WhatsApp"
+            ><i class="fab fa-whatsapp"></i
+          ></a>
+          <a href="#" class="text-light mx-2 fs-4" title="Instagram"
+            ><i class="fab fa-instagram"></i
+          ></a>
+          <a href="#" class="text-light mx-2 fs-4" title="Facebook"
+            ><i class="fab fa-facebook"></i
+          ></a>
+          <a href="#" class="text-light mx-2 fs-4" title="YouTube"
+            ><i class="fab fa-youtube"></i
+          ></a>
+        </div>
+        <p class="text-white mb-1 fw-bold fs-5">Designed by: Josbrevar07</p>
+        <p class="text-light small">
+          Simulador diseñado y creado en Santiago de Puriscal, San José, Costa
+          Rica | © 2026 Todos los derechos reservados
+        </p>
+      </footer>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      let targetExit = 1;
+      let selectedLane = null;
+      let signalIn = null;
+      let signalOut = null;
+
+      let path = [];
+      let frameIndex = 0;
+
+      function setupButtons(selector, variableSetter) {
+        document.querySelectorAll(selector).forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            document
+              .querySelectorAll(selector)
+              .forEach((b) =>
+                b.classList.remove("active", "text-dark", "fw-bold"),
+              );
+            e.target.classList.add("active", "text-dark", "fw-bold");
+            variableSetter(e.target.dataset.lane || e.target.dataset.sig);
+          });
+        });
+      }
+
+      setupButtons(".lane-btn", (val) => (selectedLane = val));
+      setupButtons(".sig-in-btn", (val) => (signalIn = val));
+      setupButtons(".sig-out-btn", (val) => (signalOut = val));
+
+      function initGame() {
+        targetExit = Math.floor(Math.random() * 4) + 1;
+        document.getElementById("missionText").innerHTML =
+          `Misión: Tomar la <strong>Salida ${targetExit}</strong>`;
+
+        selectedLane = signalIn = signalOut = null;
+        frameIndex = 0;
+        path = [];
+
+        document
+          .querySelectorAll(".btn-custom")
+          .forEach((b) => b.classList.remove("active", "text-dark", "fw-bold"));
+        document.getElementById("resultBox").classList.add("d-none");
+        document.getElementById("nextBtn").classList.add("d-none");
+        document.getElementById("startAnimationBtn").disabled = false;
+
+        drawScene();
+        // Mostrar auto inicial
+        path = [
+          {
+            x: 300 + 45,
+            y: 550,
+            angle: -Math.PI / 2,
+            state: "entering",
+            steer: 0,
+          },
+        ];
+        drawRealisticCar();
+      }
+
+      function drawScene() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = 300,
+          cy = 300;
+
+        ctx.fillStyle = "#242a26";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Geometría matemática de los carriles
+        ctx.fillStyle = "#3a3f44";
+        ctx.fillRect(cx - 60, 0, 120, 600);
+        ctx.fillRect(0, cy - 60, 600, 120);
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+        ctx.fillStyle = "#3a3f44";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy, 45, 0, Math.PI * 2);
+        ctx.fillStyle = "#203024";
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#6c757d";
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, 80, 0, Math.PI * 2);
+        ctx.setLineDash([12, 12]);
+        ctx.strokeStyle = "#dee2e6";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(cx, 0);
+        ctx.lineTo(cx, cy - 120);
+        ctx.moveTo(cx, cy + 120);
+        ctx.lineTo(cx, 600);
+        ctx.moveTo(0, cy);
+        ctx.lineTo(cx - 120, cy);
+        ctx.moveTo(cx + 120, cy);
+        ctx.lineTo(600, cy);
+        ctx.strokeStyle = "#ffc107";
+        ctx.setLineDash([]);
+        ctx.stroke();
+
+        // Etiquetas de Calles
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 18px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("Salida 2", cx + 75, 40);
+        ctx.fillText("Salida 1", 510, cy - 75);
+        ctx.fillText("Entrada", cx + 75, 570);
+        ctx.fillText("Salida 3", 15, cy + 85);
+
+        // Marcas viales
+        for (let i = 0; i < 4; i++) {
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate((i * Math.PI) / 2);
+
+          // Línea de parada
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(2, 115, 56, 4);
+
+          // CEDA
+          for (let tx = 5; tx <= 55; tx += 20) {
+            ctx.beginPath();
+            ctx.moveTo(tx, 125);
+            ctx.lineTo(tx + 16, 125);
+            ctx.lineTo(tx + 8, 140);
+            ctx.fill();
+          }
+
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 14px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText("CEDA", 30, 160);
+
+          // 30 KM/H
+          ctx.beginPath();
+          ctx.arc(30, 215, 26, 0, Math.PI * 2);
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = "#dc3545";
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(30, 215, 24, 0, Math.PI * 2);
+          ctx.fillStyle = "#fff";
+          ctx.fill();
+
+          ctx.fillStyle = "#111";
+          ctx.font = "900 18px Arial";
+          ctx.fillText("30", 30, 214);
+
+          ctx.font = "bold 9px Arial";
+          ctx.fillText("KP/H", 30, 228);
+
+          ctx.restore();
+        }
+      }
+
+      function generatePath() {
+        path = [];
+        const speed = 3.5;
+        const cx = 300,
+          cy = 300;
+
+        let laneOff = selectedLane === "outer" ? 45 : 15;
+        let R = selectedLane === "outer" ? 98 : 62;
+
+        let offsetA = Math.asin(laneOff / R);
+        let startA = Math.PI / 2 - offsetA;
+
+        let exitA;
+        if (targetExit === 1) exitA = offsetA;
+        if (targetExit === 2) exitA = -Math.PI / 2 + offsetA;
+        if (targetExit === 3) exitA = -Math.PI + offsetA;
+        if (targetExit === 4) exitA = -Math.PI * 1.5 + offsetA;
+
+        function addCurvePoints(p0, p1, p2, p3, steps, stateStr) {
+          for (let i = 0; i <= steps; i++) {
+            let t = i / steps;
+            let u = 1 - t;
+            path.push({
+              x:
+                u ** 3 * p0.x +
+                3 * u ** 2 * t * p1.x +
+                3 * u * t ** 2 * p2.x +
+                t ** 3 * p3.x,
+              y:
+                u ** 3 * p0.y +
+                3 * u ** 2 * t * p1.y +
+                3 * u * t ** 2 * p2.y +
+                t ** 3 * p3.y,
+              state: stateStr,
+            });
+          }
+        }
+
+        // Ingreso Recto
+        for (let y = 600; y > cy + R + 40; y -= speed) {
+          path.push({ x: cx + laneOff, y: y, state: "entering" });
+        }
+
+        // Curva al entrar
+        let p0 = path[path.length - 1];
+        let p1 = { x: p0.x, y: p0.y - 40 };
+
+        let circEnterA = startA - 0.15;
+        let circP = {
+          x: cx + R * Math.cos(circEnterA),
+          y: cy + R * Math.sin(circEnterA),
+        };
+        let p2 = {
+          x: circP.x - Math.sin(circEnterA) * 40,
+          y: circP.y + Math.cos(circEnterA) * 40,
+        };
+        addCurvePoints(p0, p1, p2, circP, 25, "entering");
+
+        // Arco
+        let actualExitA = exitA + 0.45;
+        let arcSteps = Math.max(
+          10,
+          Math.floor((Math.abs(actualExitA - circEnterA) * R) / speed),
+        );
+        for (let i = 0; i <= arcSteps; i++) {
+          let a = circEnterA + (actualExitA - circEnterA) * (i / arcSteps);
+          let s = i > arcSteps - 15 ? "exiting" : "circling";
+          path.push({
+            x: cx + R * Math.cos(a),
+            y: cy + R * Math.sin(a),
+            state: s,
+          });
+        }
+
+        // Curva al salir
+        let exP0 = path[path.length - 1];
+        let exP1 = {
+          x: exP0.x + Math.sin(actualExitA) * 45,
+          y: exP0.y - Math.cos(actualExitA) * 45,
+        };
+
+        let endP, finalP, exP2;
+        if (targetExit === 1) {
+          endP = { x: cx + R + 30, y: cy + laneOff };
+          finalP = { x: 650, y: cy + laneOff };
+          exP2 = { x: endP.x - 45, y: endP.y };
+        }
+        if (targetExit === 2) {
+          endP = { x: cx + laneOff, y: cy - R - 30 };
+          finalP = { x: cx + laneOff, y: -50 };
+          exP2 = { x: endP.x, y: endP.y + 45 };
+        }
+        if (targetExit === 3) {
+          endP = { x: cx - R - 30, y: cy - laneOff };
+          finalP = { x: -50, y: cy - laneOff };
+          exP2 = { x: endP.x + 45, y: endP.y };
+        }
+        if (targetExit === 4) {
+          endP = { x: cx - laneOff, y: cy + R + 30 };
+          finalP = { x: cx - laneOff, y: 650 };
+          exP2 = { x: endP.x, y: endP.y - 45 };
+        }
+        addCurvePoints(exP0, exP1, exP2, endP, 30, "exiting");
+
+        // Salida Recta
+        let dist = Math.hypot(finalP.x - endP.x, finalP.y - endP.y);
+        for (let i = 0; i <= dist / speed; i++) {
+          path.push({
+            x: endP.x + (finalP.x - endP.x) * (i / (dist / speed)),
+            y: endP.y + (finalP.y - endP.y) * (i / (dist / speed)),
+            state: "exiting",
+          });
+        }
+
+        // Dirección de llantas
+        for (let i = 0; i < path.length - 1; i++) {
+          path[i].angle = Math.atan2(
+            path[i + 1].y - path[i].y,
+            path[i + 1].x - path[i].x,
+          );
+          if (i > 0) {
+            let diff = path[i].angle - path[i - 1].angle;
+            if (diff > Math.PI) diff -= Math.PI * 2;
+            if (diff < -Math.PI) diff += Math.PI * 2;
+            path[i].steer = diff * 18;
+          } else {
+            path[i].steer = 0;
+          }
+        }
+        path[path.length - 1].angle = path[path.length - 2].angle;
+        path[path.length - 1].steer = 0;
+      }
+
+      function drawRealisticCar() {
+        if (path.length === 0) return;
+        let car = path[frameIndex] || path[path.length - 1];
+
+        ctx.save();
+        ctx.translate(car.x, car.y);
+        ctx.rotate(car.angle);
+
+        ctx.fillStyle = "#111";
+        ctx.save();
+        ctx.translate(12, -15);
+        ctx.rotate(car.steer || 0);
+        ctx.fillRect(-5, -3, 10, 6);
+        ctx.restore();
+        ctx.save();
+        ctx.translate(12, 15);
+        ctx.rotate(car.steer || 0);
+        ctx.fillRect(-5, -3, 10, 6);
+        ctx.restore();
+
+        ctx.fillRect(-12, -18, 10, 6);
+        ctx.fillRect(-12, 12, 10, 6);
+
+        ctx.fillStyle = "#0d6efd";
+        ctx.beginPath();
+        ctx.roundRect(-16, -14, 32, 28, 6);
+        ctx.fill();
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = -2;
+        ctx.shadowOffsetY = 4;
+
+        ctx.shadowColor = "transparent";
+        ctx.fillStyle = "#1c2833";
+        ctx.beginPath();
+        ctx.roundRect(0, -11, 10, 22, 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.roundRect(-12, -10, 6, 20, 2);
+        ctx.fill();
+
+        const isBlinking = Math.floor(Date.now() / 300) % 2 === 0;
+        let showLeft = false;
+        let showRight = false;
+
+        if (car.state === "entering" && signalIn !== "none" && signalIn) {
+          if (signalIn === "left") showLeft = true;
+          if (signalIn === "right") showRight = true;
+        } else if (
+          (car.state === "exiting" || car.state === "circling") &&
+          signalOut
+        ) {
+          if (car.state === "circling" && targetExit > 1) {
+            showLeft = true;
+          }
+          if (car.state === "exiting" && signalOut !== "none") {
+            showLeft = false;
+            if (signalOut === "left") showLeft = true;
+            if (signalOut === "right") showRight = true;
+          }
+        }
+
+        if (isBlinking) {
+          ctx.fillStyle = "#ffb700";
+          if (showLeft) {
+            ctx.fillRect(13, -14, 3, 5);
+            ctx.fillRect(-15, -14, 3, 5);
+          }
+          if (showRight) {
+            ctx.fillRect(13, 9, 3, 5);
+            ctx.fillRect(-15, 9, 3, 5);
+          }
+        }
+
+        ctx.restore();
+      }
+
+      function animate() {
+        drawScene();
+        drawRealisticCar();
+
+        frameIndex++;
+        if (frameIndex < path.length) {
+          requestAnimationFrame(animate);
+        } else {
+          evaluateRules();
+        }
+      }
+
+      function evaluateRules() {
+        let errors = [];
+
+        if (
+          selectedLane === "outer" &&
+          (targetExit === 3 || targetExit === 4)
+        ) {
+          errors.push(
+            "<strong>Carril Incorrecto:</strong> El carril externo SOLO permite abandonar en la 1era o 2da salida.",
+          );
+        }
+
+        if (signalIn === "none" || !signalIn) {
+          errors.push(
+            "<strong>Señal de Ingreso:</strong> Debe usar direccionales al ingresar a la rotonda.",
+          );
+        } else {
+          if (targetExit === 1 && signalIn !== "right") {
+            errors.push(
+              "<strong>Señal de Ingreso:</strong> Para la primera salida, ingrese con la direccional DERECHA.",
+            );
+          } else if (targetExit > 1 && signalIn !== "left") {
+            errors.push(
+              "<strong>Señal de Ingreso:</strong> Si va a continuar dentro de la rotonda, ingrese con la direccional IZQUIERDA.",
+            );
+          }
+        }
+
+        if (signalOut === "none" || !signalOut) {
+          errors.push(
+            "<strong>Señal de Salida:</strong> Debe usar direccionales al salir.",
+          );
+        } else if (signalOut !== "right") {
+          errors.push(
+            "<strong>Señal de Salida:</strong> Para abandonar la rotonda siempre se gira a la derecha, debe usar la direccional DERECHA.",
+          );
+        }
+
+        const resBox = document.getElementById("resultBox");
+        resBox.classList.remove("d-none", "alert-success", "alert-danger");
+
+        if (errors.length === 0) {
+          resBox.classList.add("alert-success");
+          resBox.innerHTML =
+            "<h5 class='mb-2'>¡Maniobra Perfecta!</h5>Has cumplido con la norma del MOPT correctamente.";
+        } else {
+          resBox.classList.add("alert-danger");
+          resBox.innerHTML =
+            "<h5 class='mb-2'>Infracciones Detectadas:</h5><ul class='mb-0'>" +
+            errors.map((e) => `<li>${e}</li>`).join("") +
+            "</ul>";
+        }
+
+        document.getElementById("nextBtn").classList.remove("d-none");
+      }
+
+      document
+        .getElementById("startAnimationBtn")
+        .addEventListener("click", () => {
+          if (!selectedLane) return alert("Seleccione un carril.");
+          if (!signalIn) return alert("Seleccione la direccional de ingreso.");
+          if (!signalOut) return alert("Seleccione la direccional de salida.");
+
+          document.getElementById("startAnimationBtn").disabled = true;
+          generatePath();
+          frameIndex = 0;
+          animate();
+        });
+
+      document.getElementById("nextBtn").addEventListener("click", initGame);
+
+      initGame();
+    </script>
+  </body>
+</html>
